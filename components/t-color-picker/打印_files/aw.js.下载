@@ -1,0 +1,1167 @@
+function AWUtil() {
+	var sys_codelist = {};
+	var sys_cache = {};
+	if (typeof window["sys_codelist"] != "undefined" && window["sys_codelist"] != null) {
+		sys_codelist = window["sys_codelist"];
+	}
+	if ($.inputmask) {
+		$.extend($.inputmask.defaults, {
+			clearIncomplete : true,
+			clearMaskOnLostFocus : true
+		});
+	}
+	if (typeof Messenger != "undefined") {
+		Messenger.options = {
+			extraClasses : 'messenger-fixed messenger-on-top messenger-on-right',
+			theme : 'air'
+		}
+	}
+	this.setCache = function(region, name, value) {
+		if (!sys_cache[region]) {
+			sys_cache[region] = {};
+		}
+		sys_cache[region][name] = value;
+	}
+	this.getCache = function(region, name) {
+		if (!sys_cache[region]) {
+			sys_cache[region] = {};
+		}
+		return (typeof sys_cache[region][name] != "undefined") ? sys_cache[region][name] : null;
+	}
+	this.getCodelistData = function(name) {
+		return sys_codelist[name] ? sys_codelist[name] : null;
+	};
+	this.getCodelistMap = function(name) {
+		var list = this.getCodelistData(name);
+		if (list) {
+			var map = {};
+			for (var i = 0; i < list.length; i += 2) {
+				map[list[i]] = list[i + 1];
+			}
+			return map;
+		}
+		return null;
+	};
+	this.initCodelist = function(parent) {
+		$('.aw-codelist', parent ? $(parent) : document.body).each(function(i, n) {
+			var n = $(n);
+			var width = "100%";
+			if (n.closest(".form-horizontal").length > 0) {
+				width = "220px";
+			}
+			if (n.attr("aw-codelist")) {
+				if (!n.attr("multiple")) {
+					n.append($("<option value=''></option>"));
+				}
+				if (sys_codelist[n.attr("aw-codelist").toUpperCase()]) {
+					var cl = sys_codelist[n.attr("aw-codelist").toUpperCase()];
+					for (var i = 0; i < cl.length; i += 2) {
+						if (n.attr("aw-includecode") == "true") {
+							n.append($("<option></option>").val(cl[i]).html(cl[i] + "&nbsp" + cl[i + 1]));
+						} else {
+							n.append($("<option></option>").val(cl[i]).html(cl[i + 1]));
+						}
+					}
+				}
+				if (n.attr("value")) {
+					n.val(n.attr("value"));
+				}
+			}
+			n.chosen({
+				search_contains: true,
+				disable_search_threshold : 10,
+				width : width
+			});
+		});
+	};
+	this.initDatetimePicker = function(parent) {
+		$('.aw-date', parent ? $(parent) : document.body).each(function(i, n) {
+			var n = $(n);
+			n.datetimepicker({
+				todayBtn : "linked",
+				todayHighlight : true,
+				format : n.data("date-format") ? n.data("date-format") : "yyyy-mm-dd",
+				language : 'zh-CN',
+				minView : typeof n.data("min-view") == "undefined" ? 2 : parseInt(n.data("min-view")),
+				autoclose : true,
+				forceParse : false,
+				startDate : new Date(1900, 0, 1),
+				endDate : new Date(2099, 11, 31)
+			});
+			var ip = $($(">input", n));
+			if (ip.attr("readonly") == "readonly") {
+				ip.keydown(function(e) {
+					if (e.keyCode == 8) {
+						if ($(this).val()) {
+							$(this).val("").change();
+						}
+					}
+				});
+			}
+			$(">span", n).click(function() {
+				if ($(">input", $(this).parent()).is(":disabled")) {
+					return;
+				}
+				if ($(">i", $(this)).hasClass('icon-remove')) {
+					$(">input", $(this).parent()).val("").change();
+				}
+			});
+			ip.blur(function() {
+				var self = $(this);
+				setTimeout(function() {
+					self.change();
+				}, 10);
+			});
+			ip.change(function() {
+				var self = $(this);
+				if (!self.val()) {
+					$(">span>i", self.parent()).removeClass("icon-remove").addClass("icon-calendar");
+				} else {
+					$(">span>i", self.parent()).removeClass("icon-calendar").addClass("icon-remove");
+				}
+			});
+		});
+	};
+	this.initModal = function(parent) {
+		$(".aw-modal", parent ? $(parent) : document.body).each(function(i, n) {
+			var n = $(n);
+			if (n.attr("aw-width")) {
+				var width = parseInt(n.attr("aw-width"));
+				if (width) {
+					n.css("width", width + "px").css("margin-left", -(width / 2) + "px");
+				}
+			}
+		});
+	};
+	this.initCheckSwitch = function(parent) {
+		$(".aw-checkswitch", parent ? $(parent) : document.body).each(function(i, n) {
+			$(n).bootstrapSwitch();
+		});
+	};
+	this.initTab = function(parent) {
+		$(".aw-tabheader", parent ? $(parent) : document.body).each(function(i, n) {
+			var n = $(n);
+			n.click(function() {
+				var self = $(this);
+				if (self.hasClass("active") || self.hasClass("disabled")) {
+					return;
+				}
+				if (self.attr("aw-tabbody")) {
+					var tabbody = self.attr("aw-tabbody");
+					if (tabbody) {
+						$(">li", self.parent()).each(function(i2, n2) {
+							var n2 = $(n2);
+							n2.removeClass("active");
+							if (n2.attr("aw-tabbody")) {
+								$("#" + n2.attr("aw-tabbody")).hide();
+							}
+						});
+						self.addClass("active");
+						$("#" + tabbody).show();
+					}
+				}
+			});
+		});
+	};
+	this.initInputMask = function(parent) {
+		$(".aw-inputmask", parent ? $(parent) : document.body).each(function(i, n) {
+			$(n).inputmask();
+		});
+	};
+	this.initTooltip = function(parent) {
+		$(".aw-tooltip", parent ? $(parent) : document.body).each(function(i, n) {
+			$(n).tooltip();
+		});
+	};
+	this.initQuickSearch = function(parent) {
+		$(".aw-quicksearch", parent ? $(parent) : document.body).each(function(i, n) {
+			$(n).quicksearch();
+		});
+	};
+	this.initRegionTab = function(parent) {
+		$(".aw-regiontab", parent ? $(parent) : document.body).each(function(i, n) {
+			$(n).regiontab();
+		});
+	};
+	this.initCheck = function(parent) {
+		$(".aw-icheck", parent ? $(parent) : document.body).each(function(i, n) {
+			$(n).iCheck({
+				checkboxClass : 'icheckbox_square-blue',
+				radioClass : 'iradio_square-blue'
+			});
+		});
+	};
+	this.initValidImmediately = function(parent) {
+		$(".aw-valid", parent ? $(parent) : document.body).each(function(i, n) {
+			n = $(n);
+			var bind = n.attr("aw-validbind") ? n.attr("aw-validbind").split(",") : [ "change" ];
+			for (var i = 0; i < bind.length; i++) {
+				n.bind(bind[i], function(e, skipValid) {
+					if (skipValid && skipValid == "skipValid") {
+						return;
+					}
+					var self = $(this);
+					setTimeout(function() {
+						var name = self.attr("name");
+						var form = self.closest("form");
+						var validform = form.attr("aw-validform");
+						if (!name || !validform || !window[validform] || !window[validform][name]) {
+							return;
+						}
+						AW.setWidgetErrorTip(form, self, AW.validateWidget(form, self, window[validform][name]));
+					}, 50);
+				});
+			}
+		});
+	};
+	this.refreshGrid = function(table, data, paging, render) {
+		var table = $(table);
+		var cols = {};
+		for (var i = 0; i < data.cols.length; i++) {
+			cols[data.cols[i]] = i;
+		}
+		var thd = [];
+		var keyc = [];
+		var cdlst = [];
+		var cmap = {};
+		$("thead th[aw-colname]", table).each(function(i, n) {
+			var n = $(n);
+			thd.push(n.attr("aw-colname"));
+			keyc.push(n.attr("aw-keycol"));
+			var awcl = n.attr("aw-codelist");
+			if (typeof awcl != "undefined" && awcl) {
+				awcl = awcl.toUpperCase();
+			}
+			cdlst.push(awcl);
+			if (awcl && !cmap[awcl]) {
+				cmap[awcl] = AW.getCodelistMap(awcl);
+			}
+		});
+		var tbd = $("tbody", table);
+		tbd.empty();
+		var list = data.data;
+		for (var i = 0; i < list.length; i++) {
+			var tr = $("<tr></tr>");
+			for (var j = 0; j < thd.length; j++) {
+				var td = $("<td></td>");
+				var val = null;
+				var coli = cols[thd[j]];
+				if (typeof coli == "undefined") {
+					if (thd[j] == "rownum") {
+						val = (data.pagenum - 1) * data.pagesize + i + 1;
+					} else if (thd[j] == "checkbox") {
+						var kc = keyc[j];
+						val = $("<input type='checkbox' name='" + kc + "' style='margin:0px'/>");
+						val.val(list[i][cols[kc]]);
+					} else if (thd[j] == "radio") {
+						var kc = keyc[j];
+						val = $("<input type='radio' name='" + kc + "' style='margin:0px'/>");
+						val.val(list[i][cols[kc]]);
+					}
+				} else {
+					val = list[i][coli];
+					if (typeof cdlst[j] != "undefined" && cdlst[j] != null) {
+						var tmpmap = cmap[cdlst[j]];
+						if (tmpmap != null && val) {
+							var vals = val.split(",");
+							var txts = [];
+							for (var vs = 0; vs < vals.length; vs++) {
+								var tmpv = tmpmap[vals[vs]];
+								if (typeof tmpv != "undefined") {
+									txts.push(tmpv);
+								}
+							}
+							val = txts.join(",");
+						}
+					}
+				}
+				var re = false;
+				if (render) {
+					re = render(td, val, typeof coli == "undefined" ? null : list[i][coli], i, thd[j]);
+				}
+				if (!re) {
+					if (typeof val == "object") {
+						td.append(val);
+					} else {
+						td.html(val + "");
+					}
+				}
+				tr.append(td);
+			}
+			tbd.append(tr);
+		}
+		var pi = table.attr("aw-gridpageinfo");
+		if (pi) {
+			var pi = $("#" + pi);
+			pi.empty();
+			var total = data.total;
+			var pagenum = data.pagenum;
+			var pagetotal = Math.ceil(total * 1.0 / data.pagesize);
+			var sp = $("<span class='pagination-info'></span>");
+			sp.html("共" + total + "条数据，每页" + data.pagesize + "条，第" + pagenum + "/" + pagetotal + "页");
+			pi.append(sp);
+			var ul = $("<ul></ul>");
+			var li1 = $("<li><a href='javascript:void(null)'>&laquo;</a></li>");
+			if (pagenum <= 1) {
+				li1.addClass("disabled");
+			} else if (paging) {
+				li1.click(function() {
+					paging(1, data.query);
+				});
+			}
+			var li2 = $("<li><a href='javascript:void(null)'>上一页</a></li>");
+			if (pagenum <= 1) {
+				li2.addClass("disabled");
+			} else if (paging) {
+				li2.click(function() {
+					paging(pagenum - 1, data.query);
+				});
+			}
+			var li3 = $("<li><a href='javascript:void(null)'>下一页</a></li>");
+			if (pagenum >= pagetotal) {
+				li3.addClass("disabled");
+			} else if (paging) {
+				li3.click(function() {
+					paging(pagenum + 1, data.query);
+				});
+			}
+			var li4 = $("<li><a href='javascript:void(null)'>&raquo;</a></li>");
+			if (pagenum >= pagetotal) {
+				li4.addClass("disabled");
+			} else if (paging) {
+				li4.click(function() {
+					paging(pagetotal, data.query);
+				});
+			}
+			ul.append(li1).append(li2).append(li3).append(li4).appendTo(pi);
+		}
+	};
+	this.refreshForm = function(form, data) {
+		if (typeof form == "undefined" || form == null) {
+			return;
+		}
+		if (typeof data == "undefined" || data == null) {
+			data = {};
+		}
+		form = $(form);
+		$(".control-group", form).each(function(i, n) {
+			$(n).removeClass("error");
+		});
+		$("input,select,textarea", form).each(
+				function(i, n) {
+					var n = $(n);
+					var name = n.attr("name");
+					if (n.is("textarea")) {
+						n.val("");
+						if (typeof data[name] != "undefined" && data[name] !== null) {
+							n.val(data[name]);
+						}
+					} else if (n.is("select")) {
+						n.val(null);
+						if (typeof data[name] != "undefined" && data[name] !== null) {
+							var val = data[name];
+							if (n.attr("multiple")) {
+								val = val.replace(/[ ]/g, "").split(",");
+							}
+							n.val(val);
+						}
+						if (typeof n.chosen != "undefined") {
+							n.trigger('chosen:updated');
+						}
+					} else if (n.is("input")) {
+						if (!n.attr("type") || n.attr("type") == "text" || n.attr("type") == "password" || n.attr("type") == "hidden"
+								|| n.attr("type") == "file") {
+							n.val("");
+							if (typeof data[name] != "undefined" && data[name] !== null) {
+								n.val(data[name]);
+							}
+						} else if (n.attr("type") == "radio") {
+							n.attr("checked", false);
+							if (typeof data[name] != "undefined" && data[name] !== null) {
+								if (n.val() === data[name]) {
+									n.get(0).checked = true;
+								}
+							}
+							if (typeof n.iCheck != "undefined") {
+								n.iCheck('update');
+							}
+						} else if (n.attr("type") == "checkbox") {
+							n.attr("checked", false);
+							if (typeof data[name] != "undefined" && data[name] !== null) {
+								var val = data[name];
+								val = val.replace(/[ ]/g, "").split(",");
+								if (val.indexOf(n.val()) > -1) {
+									n.get(0).checked = true;
+								}
+							}
+							if (typeof n.iCheck != "undefined") {
+								n.iCheck('update');
+							}
+						}
+					}
+					n.trigger("change", [ "skipValid" ]);
+					if (n.data("inputmask")) {
+						n.trigger("blur", [ "FromRefreshForm" ]);
+					}
+				});
+	};
+	this.getHZLength = function(inValue) {
+		inValue = inValue.toString();
+		if (inValue == null || inValue == "")
+			return 0;
+		var len = 0;
+		for (var i = 0, l = inValue.length; i < l; i++) {
+			if (inValue.charCodeAt(i) < 128) {
+				len++;
+				continue;
+			}
+			len += 2;
+		}
+		return len;
+	};
+	this.validateWidget = function(form, node, config) {
+		var res = {};
+		node = $(node);
+		var v = node.val();
+		if (node.attr("name") && node.attr("type") && (node.attr("type") == "radio" || node.attr("type") == "checkbox")) {
+			if (config.notNull) {
+				if ($("input[name='" + node.attr("name") + "']:checked", form).length == 0) {
+					res["notNull"] = config.notNull.msg ? config.notNull.msg : "请至少选择其中一项";
+				}
+			}
+			if (config.length) {
+				var l = $("input[name='" + node.attr("name") + "']:checked", form).length;
+				if (config.length.max && l > config.length.max) {
+					res["length"] = config.length.msg ? config.length.msg : "此项选择数目过多";
+				}
+				if (config.length.min && l < config.length.min) {
+					res["length"] = config.length.msg ? config.length.msg : "此项选择数目过少";
+				}
+			}
+		} else {
+			if (config.notNull) {
+				if (v == null || v == "" || $.trim(v) == "") {
+					res["notNull"] = config.notNull.msg ? config.notNull.msg : "此项不可为空";
+				}
+			}
+			if (v && config.length) {
+				if (!(config.dataType && config.dataType.type && (config.dataType.type == "date" || config.dataType.type == "timestamp"))) {
+					var p = true;
+					var l = v ? this.getHZLength(v) : 0;
+					if (typeof config.length.max != "undefined") {
+						if (l > config.length.max) {
+							p = false;
+						}
+					}
+					if (typeof config.length.min != "undefined") {
+						if (l < config.length.min) {
+							p = false;
+						}
+					}
+					if (!p) {
+						res["length"] = config.length.msg ? config.length.msg : "输入长度不符合要求";
+					}
+				}
+			}
+			if (config.equalWith) {
+				if (v != $("#" + config.equalWith["id"]).val()) {
+					res["equalWith"] = config.equalWith.msg ? config.equalWith.msg : "输入的值不符";
+				}
+			}
+			if (v && config.email) {
+				var reg = config.email.regexp ? config.email.regexp : /^\w+((-\w+)|(\.\w+))*\@{1}\w+\.{1}\w{2,4}(\.{0,1}\w{2}){0,1}/ig;
+				if (v.search(reg) == -1) {
+					res["email"] = config.email.msg ? config.email.msg : "输入的邮箱格式不正确";
+				}
+			}
+			if (v && config.url) {
+				var strRegex = "^((https|http|ftp|rtsp|mms)?://)?(([0-9a-z_!~*'().&amp;=+$%-]+: )?[0-9a-z_!~*'().&amp;=+$%-]+@)?"
+						+ "(([0-9]{1,3}\.){3}[0-9]{1,3}|([0-9a-z_!~*'()-]+\.)*([0-9a-z][0-9a-z-]{0,61})?[0-9a-z]\."
+						+ "[a-z]{2,6})(:[0-9]{1,4})?((/?)|(/[0-9a-z_!~*'().;?:@&amp;=+$,%#-]+)+/?)$";
+				var reg = config.url.regexp ? config.url.regexp : new RegExp(strRegex);
+				if (v.search(reg) == -1) {
+					res["url"] = config.url.msg ? config.url.msg : "输入的网址格式不正确";
+				}
+			}
+			if (v && config.regexp) {
+				if (v.search(config.regexp.regexp) == -1) {
+					res["regexp"] = config.regexp.msg ? config.regexp.msg : "输入的格式不正确";
+				}
+			}
+			if (v && config.dataType) {
+				if (config.dataType.type == "date" || config.dataType.type == "timestamp") {
+					var reg = new RegExp(
+							"^(?:(?!0000)[0-9]{4}-(?:(?:0[1-9]|1[0-2])-(?:0[1-9]|1[0-9]|2[0-8])|(?:0[13-9]|1[0-2])-(?:29|30)|(?:0[13578]|1[02])-31)|(?:[0-9]{2}(?:0[48]|[2468][048]|[13579][26])|(?:0[48]|[2468][048]|[13579][26])00)-02-29)$");
+					var regt = new RegExp("^([0-1]\\d|2[0-3]):[0-5]\\d:[0-5]\\d$");
+					var ts = v.split(" ");
+					if (ts.length > 2) {
+						res["dataType"] = config.dataType.msg ? config.dataType.msg : "输入的日期格式不正确";
+					} else {
+						if (ts.length == 1) {
+							if (ts[0].search(reg) == -1) {
+								res["dataType"] = config.dataType.msg ? config.dataType.msg : "输入的日期格式不正确";
+							}
+						} else {
+							if (ts[0].search(reg) == -1 || ts[1].search(regt) == -1) {
+								res["dataType"] = config.dataType.msg ? config.dataType.msg : "输入的日期格式不正确";
+							}
+						}
+					}
+				}
+				if (config.dataType.type == "big_decimal") {
+					var reg = new RegExp("^(([0-9]+\\.[0-9]*[1-9][0-9]*)|([0-9]*[1-9][0-9]*\\.[0-9]+)|([1-9]\\d*|0))$");
+					if (v.search(reg) == -1) {
+						res["dataType"] = config.dataType.msg ? config.dataType.msg : "输入的数字格式不正确";
+					}
+				}
+				if (config.dataType.type == "long") {
+					var reg = new RegExp("^[0-9]*$");
+					if (v.search(reg) == -1) {
+						res["dataType"] = config.dataType.msg ? config.dataType.msg : "输入的数字格式不正确";
+					}
+				}
+			}
+			if (v && config.precision && (typeof config.precision.max != "undefined")) {
+				var pnum = v.split(".");
+				if (pnum[0].length > config.precision.max) {
+					res["precision"] = config.precision.msg ? config.precision.msg : "输入的数字整数部分不能超过" + config.precision.max + "位";
+				}
+			}
+			if (v && config.scale && (typeof config.scale.max != "undefined")) {
+				var pnum = v.split(".");
+				if (pnum.length > 1 && pnum[1].length > config.scale.max) {
+					res["scale"] = config.scale.msg ? config.scale.msg : "输入的数字小数部分不能超过" + config.scale.max + "位";
+				}
+			}
+		}
+		if ($.isEmptyObject(res)) {
+			return null;
+		}
+		return res;
+	};
+	this.validateForm = function(form, rules) {
+		if (typeof form == "undefined" || form == null) {
+			return;
+		}
+		if (typeof rules == "undefined" || rules == null) {
+			return;
+		}
+		var result = {};
+		form = $(form);
+		$("input,select,textarea", form).each(function(i, n) {
+			var n = $(n);
+			var name = n.attr("name");
+			if (n.data("inputmask")) {
+				n.trigger("blur", [ "FromValidationForm" ]);
+			}
+			if (name && rules[name.toLowerCase()]) {
+				var rule = rules[name.toLowerCase()];
+				var res = AW.validateWidget(form, n, rule);
+				if (!$.isEmptyObject(res)) {
+					result[name] = res;
+				}
+			}
+		});
+		if ($.isEmptyObject(result)) {
+			return null;
+		}
+		return result;
+	};
+	this.setWidgetErrorTip = function(form, node, errors) {
+		node = $(node);
+		node.closest(".control-group").removeClass("error");
+		if (!$(form).hasClass("form-horizontal")) {
+			var ttd = node.closest(".control-group").closest("td");
+			var ltd = null;
+			if (ttd.length > 0) {
+				ltd = ttd.prev();
+			}
+			var lcg = $(".control-group", ltd);
+			if (lcg.length > 0) {
+				lcg.removeClass("error");
+			}
+		}
+		if (errors != null) {
+			var name = node.attr("name");
+			var e = {};
+			e[name] = errors;
+			this.setFormErrorTip(form, e, false);
+		}
+		return errors;
+	};
+	this.setFormErrorTip = function(form, errors, refresh) {
+		if (typeof form == "undefined" || form == null) {
+			return null;
+		}
+		form = $(form);
+		if (typeof refresh == "undefined" || refresh === true) {
+			$(".control-group", form).each(function(i, n) {
+				$(n).removeClass("error");
+			});
+		}
+		if (typeof errors == "undefined" || errors == null) {
+			return null;
+		}
+		var mode = "1";
+		if (!form.hasClass("form-horizontal")) {
+			mode = "2";
+		}
+		function setErrorClass(n, msg) {
+			if (mode == "2") {
+				var tdiv = n.closest(".control-group");
+				tdiv.length > 0 && tdiv.addClass("error");
+				var ttd = tdiv.closest("td");
+				var ltd = null;
+				if (ttd.length > 0) {
+					ltd = ttd.prev();
+				}
+				var lcg = $(".control-group", ltd);
+				if (lcg.length > 0) {
+					lcg.addClass("error");
+					$(".icon-errortip", lcg).attr("data-original-title", msg);
+				}
+			} else if (mode == "1") {
+				var tdiv = n.closest(".control-group");
+				tdiv.length > 0 && tdiv.addClass("error");
+				tdiv.find(".errortip").html(msg);
+			}
+		}
+		$("input,select,textarea,button", form).each(function(i, n) {
+			var n = $(n);
+			var name = n.attr("name");
+			if (name && errors[name] && !$.isEmptyObject(errors[name])) {
+				if ((typeof errors[name]).toLowerCase() == "string") {
+					setErrorClass(n, errors[name]);
+				} else {
+					var msg = "";
+					for ( var m in errors[name]) {
+						msg = errors[name][m];
+						break;
+					}
+					setErrorClass(n, msg);
+				}
+			}
+		});
+		return errors;
+	};
+	this.createCheckGroup = function(parent, type, code, name, style, br) {
+		if (typeof parent == "undefined" || parent == null || typeof code == "undefined" || code == null || typeof name == "undefined"
+				|| name == null) {
+			return;
+		}
+		if (typeof type == "undefined" || type == null) {
+			type = "radio";
+		}
+		if (typeof style == "undefined" || style == null) {
+			style = "square-blue";
+		}
+		if (!this.getCodelistData(code.toUpperCase())) {
+			return;
+		}
+		var data = this.getCodelistData(code.toUpperCase());
+		for (var i = 0; i < data.length; i += 2) {
+			if (i != 0 && br === true) {
+				$("<br />").appendTo(parent);
+			}
+			$("<input />").attr("name", name).attr("type", type).val(data[i]).appendTo(parent);
+			$("<label></label>").html(data[i + 1]).appendTo(parent).addClass("icheck-label");
+		}
+		$("input", parent).iCheck({
+			checkboxClass : 'icheckbox_' + style,
+			radioClass : 'iradio_' + style
+		});
+	};
+	this.setDisabled = function(nodes, disabled) {
+		nodes.each(function(i, n) {
+			var n = $(n);
+			n.attr("disabled", disabled);
+			if (n.hasClass("chosen-select")) {
+				if (disabled) {
+					n.parent().find(">.chosen-container").addClass("chosen-disabled");
+				} else {
+					n.parent().find(">.chosen-container").removeClass("chosen-disabled");
+				}
+			} else {
+				if (n.parent().find(">.iCheck-helper").length > 0) {
+					if (disabled) {
+						n.parent().addClass("disabled");
+					} else {
+						n.parent().removeClass("disabled");
+					}
+				}else if (n.parent().find(">.bs-placeholder").length > 0) {
+					if (disabled) {
+						n.parent().find(">.bs-placeholder").addClass("disabled");
+						n.parent().addClass("disabled");
+					} else {
+						n.parent().find(">.bs-placeholder").removeClass("disabled");
+						n.parent().removeClass("disabled");
+					}
+				}
+			}
+		});
+	};
+	this.msg = function(param) {
+		param = param ? param : {};
+		var title = param.title ? param.title : "提示";
+		var content = param.content ? param.content : "是否确认？";
+		var showclose = (typeof param.showClose == "undefined" ? true : param.showClose);
+		var width = (typeof param.width == "undefined" ? false : parseInt(param.width));
+		var buttons = (typeof param.buttons == "undefined" ? [] : param.buttons);
+		var zindex = param.zindex ? param.zindex : '';
+		var temp = '<div class="modal hide fade" tabindex="-1" data-backdrop="static" data-keyboard="false"><div class="modal-header"><button type="button" class="close">×</button><h4></h4></div><div class="modal-body"></div><div class="modal-footer"></div></div>';
+		var wrap = $(temp);
+		wrap.find(">.modal-header>h4").html(title);
+		wrap.find(">.modal-body").append(content);
+		if (!showclose) {
+			wrap.find(">.modal-header>button").hide();
+		} else {
+			wrap.find(">.modal-header>button").click(function() {
+				wrap.modal('hide');
+				if (param.onClose) {
+					param.onClose();
+				}
+				setTimeout(function() {
+					wrap.remove();
+				}, 4000);
+			});
+		}
+		if (width) {
+			wrap.css("width", width + "px").css("margin-left", -(width / 2) + "px");
+		}
+		var footer = wrap.find(">.modal-footer");
+		footer.append("<span style='float: left' class='modal-footeralert'></span>");
+		for (var i = 0; i < buttons.length; i++) {
+			var btn = $('<button class="btn"></button>').html(buttons[i].title);
+			if (buttons[i].style) {
+				btn.addClass(buttons[i].style);
+			}
+			if (buttons[i].click) {
+				btn[0]._click = buttons[i].click;
+				btn.click(function() {
+					$(this)[0]._click($(this).closest(".modal"));
+				});
+			}
+			footer.append(btn);
+		}
+		$(document.body).append(wrap);
+		wrap.modal('show');
+		if (zindex != '') {
+			//$(".modal-backdrop").css("z-index", ""+zindex-2);
+			wrap.css("z-index", ""+zindex);
+			wrap.next().next().css("z-index", ""+zindex-1);
+		}
+		return wrap;
+	};
+	this.initPage = function(body) {
+		if (typeof body == "undefined" || body == null) {
+			body = document.body;
+		}
+		AW.initCodelist(body);
+		AW.initDatetimePicker(body);
+		AW.initModal(body);
+		AW.initTab(body);
+		AW.initInputMask(body);
+		AW.initTooltip(body);
+		AW.initQuickSearch(body);
+		AW.initCheck(body);
+		AW.initValidImmediately(body);
+	};
+	this.get = function(param) {
+		this.ajax($.extend({
+			type : "GET"
+		}, param));
+	};
+	this.post = function(param) {
+		this.ajax($.extend({
+			type : "POST"
+		}, param));
+	};
+	this.ajax = function(param) {
+		var param = $.extend({
+			url : "",
+			type : "GET",
+			data : null,
+			async : true,
+			success : function() {
+
+			},
+			error : null,
+			notvalid : null,
+			notpermit : null
+		}, param);
+		$
+				.ajax({
+					url : param.url,
+					type : param.type,
+					data : param.data,
+					cache : false,
+					async : param.async,
+					beforeSend : function(request) {
+						AW.showCover();
+						if (typeof param.bizName != "undefined" && param.bizName !== null) {
+							request.setRequestHeader("bizName", encodeURIComponent(param.bizName));
+						}
+					},
+					success : function(data, status, resp) {
+						AW.hideCover();
+						if (data && data.hasError && data.postValidError) {
+							if (param.notvalid) {
+								param.notvalid(data.errors);
+							} else {
+								var tip = "";
+								if (data.errors) {
+									for ( var f in data.errors) {
+										tip += ("<br/>" + data.errors[f]);
+									}
+								}
+								AW.msg({
+									title : "出错了",
+									content : "数据校验不通过：" + tip,
+									width : 500,
+									buttons : [ {
+										title : "确定",
+										style : "btn-danger",
+										click : function(wrap) {
+											wrap.modal("hide");
+											setTimeout(function() {
+												wrap.remove();
+											}, 4000);
+										}
+									} ]
+								});
+							}
+						} else {
+							param.success(data, status, resp);
+						}
+					},
+					error : function(resp, status, because) {
+						AW.hideCover();
+						if (resp.status == 403 || resp.status == "403") {
+							if (resp.responseText.indexOf("<!--SESSION_TIMEOUT-->") >= 0) {
+								var relogin = function(wrap) {
+									$(".modal-footeralert", wrap).empty();
+									var pwd = $("input[type=password]", wrap);
+									if (!pwd.val()) {
+										pwd.focus();
+										return;
+									}
+									var jcp = $("input[type=text]", wrap);
+									if (!jcp.val()) {
+										jcp.focus();
+										return;
+									}
+									$("button", wrap).attr("disabled", true);
+									$.ajax({
+										url : appPath + "/j_spring_security_check",
+										cache : false,
+										type : "POST",
+										data : {
+											"j_username" : sys_user.account,
+											"j_password" : pwd.val(),
+											"jcaptcha" : jcp.val()
+										},
+										success : function() {
+											wrap.modal("hide");
+											setTimeout(function() {
+												if (param) {
+													AW.ajax(param);
+												}
+											}, 50);
+											setTimeout(function() {
+												wrap.remove();
+											}, 4000);
+										},
+										error : function(resp) {
+											var msg = resp.responseText;
+											var tip = "用户名或密码不正确";
+											if (msg == "locked") {
+												tip = "账户已锁定";
+											} else if (msg == "accountexpired") {
+												tip = "账户已过期";
+											} else if (msg == "disabled") {
+												tip = "账户已禁用";
+											} else if (msg == "passwordexpired") {
+												tip = "账户密码已过期";
+											} else if (msg == "jcaptha") {
+												tip = "验证码不正确";
+											} else if (msg == "error") {
+												tip = "用户名或密码不正确";
+											} else if (resp.status == 403 || resp.status == "403") {
+												tip = "登录成功，但访问的资源没有权限";
+											}
+											$(".modal-footeralert", wrap).append("<span style='color:red'>" + tip + "</span>");
+											pwd.val("");
+											pwd.focus();
+											jcp.val("");
+											$(".controls>img", wrap).attr("src", appPath + "/jcaptcha.jpg?" + new Date().getTime());
+											$("button", wrap).attr("disabled", false);
+										}
+									});
+								};
+								var login = AW
+										.msg({
+											title : "出错了",
+											content : "页面超时，请重新登录账号："
+													+ sys_user.account
+													+ "<br/><form class='form-horizontal'>"
+													+ '<div class="control-group"><label class="control-label" style="width:120px;">密码</label><div class="controls" style="margin-left:140px;"><input type="password"/></div></div>'
+													+ '<div class="control-group"><label class="control-label" style="width:120px;">验证码</label><div class="controls" style="margin-left:140px;"><img src="" title="点击更换验证码" style="cursor: pointer;border: 1px solid #ccc;padding: 4px 2px 0px 2px;"/> <input type="text" maxlength="4" style="width: 131px" /></div></div></form>',
+											showClose : false,
+											width : 500,
+											buttons : [ {
+												title : "登录",
+												style : "btn-primary",
+												click : relogin
+											} ]
+										});
+								$("input[type=text]", login).keydown(function(e) {
+									if (e.keyCode == 13) {
+										relogin(login);
+									}
+								});
+								setTimeout(function() {
+									$("input[type=password]", login).focus();
+								}, 1500);
+								$(".controls>img", login).attr("src", appPath + "/jcaptcha.jpg?" + new Date().getTime());
+								$(".controls>img", login).click(function() {
+									$(this).attr("src", appPath + "/jcaptcha.jpg?" + new Date().getTime());
+								});
+							} else {
+								if (param.notpermit) {
+									param.notpermit(resp, status, because);
+								} else {
+									AW.msg({
+										title : "出错了",
+										content : "您无访问该资源的权限",
+										width : 500,
+										buttons : [ {
+											title : "确定",
+											style : "btn-danger",
+											click : function(wrap) {
+												wrap.modal("hide");
+												setTimeout(function() {
+													wrap.remove();
+												}, 4000);
+											}
+										} ]
+									});
+								}
+							}
+						} else {
+							if (param.error) {
+								param.error(resp, status, because);
+							} else {
+								AW.msg({
+									title : "出错了",
+									content : "发生未知错误",
+									width : 500,
+									buttons : [ {
+										title : "确定",
+										style : "btn-danger",
+										click : function(wrap) {
+											wrap.modal("hide");
+											setTimeout(function() {
+												wrap.remove();
+											}, 4000);
+										}
+									} ]
+								});
+							}
+						}
+					}
+				});
+	};
+	this.setAuth = function(selector, auth) {
+		if (auth) {
+			$(selector).removeClass("aw-auth-no").addClass("aw-auth-yes");
+		} else {
+			$(selector).removeClass("aw-auth-yes").addClass("aw-auth-no");
+		}
+	};
+	this.modalDraggable = function(modal) {
+		var flag = $(modal).data("aw-draggable");
+		if (flag) {
+			return;
+		}
+		$(modal).data("aw-draggable", "true");
+		var h = $(".modal-header", modal);
+		h.css("cursor", "move");
+		var p = h.parent();
+		p.bind("hidden", function() {
+			var n = $(this);
+			var ml = "-280px";
+			if (n.attr("aw-width")) {
+				var width = parseInt(n.attr("aw-width"));
+				if (width) {
+					ml = -(width / 2) + "px";
+				}
+			}
+			n.css({
+				top : "",
+				left : "",
+				marginLeft : ml
+			});
+		});
+		h.mousedown(function(e) {
+			if ($(e.target).is("button")) {
+				return;
+			}
+			var ex = e.clientX;
+			var ey = e.clientY;
+			var mx = $(this).offset().left;
+			var my = $(this).offset().top;
+			var h = $(this);
+			var p = h.parent();
+			var f = p.hasClass("fade");
+			if (f) {
+				p.removeClass("fade");
+			}
+			p.css("margin-left", "auto");
+			p.css({
+				left : mx + "px",
+				top : my + "px"
+			})
+			var c = $("<div class='modal-dragcover' onselectstart='return false'></div>");
+			c.appendTo(document.body);
+			$(c).bind("mousemove.modaldrag", function(e) {
+				h.parent().css({
+					"left" : e.clientX - ex + mx + "px",
+					"top" : e.clientY - ey + my + "px"
+				});
+				return false;
+			});
+			$(c).bind("mouseup.modaldrag", function(e) {
+				$(document.body).unbind("mouseover.modaldrag");
+				$(document.body).unbind("mouseup.modaldrag");
+				c.remove();
+				if (f) {
+					p.addClass("fade");
+				}
+			});
+		});
+	};
+	var aw_cover = false;
+	this.showCover = function() {
+		if (aw_cover) {
+			return;
+		}
+		aw_cover = true;
+		var cover = $("#aw-cover");
+		var loading = $("#aw-cover-loading");
+		if (cover.length == 0) {
+			$("<div id='aw-cover' class='aw-cover' onselectstart='return false;'></div>").appendTo($(document.body));
+			$("<div id='aw-cover-loading' class='aw-cover-loading' onselectstart='return false;'></div>").appendTo($(document.body));
+			cover = $("#aw_cover");
+			loading = $("#aw-cover-loading");
+		}
+		cover.show();
+		loading.show();
+	};
+	this.hideCover = function() {
+		aw_cover = false;
+		$("#aw-cover").hide();
+		$("#aw-cover-loading").hide();
+	};
+}
+if (!Array.indexOf) {
+	Array.prototype.indexOf = function(Object) {
+		for (var i = 0; i < this.length; i++) {
+			if (this[i] === Object) {
+				return i;
+			}
+		}
+		return -1;
+	}
+}
+
+Date.prototype.format = function(fmt) {
+	var o = {
+		"M+" : this.getMonth() + 1,
+		"d+" : this.getDate(),
+		"h+" : this.getHours() % 12 == 0 ? 12 : this.getHours() % 12,
+		"H+" : this.getHours(),
+		"m+" : this.getMinutes(),
+		"s+" : this.getSeconds(),
+		"q+" : Math.floor((this.getMonth() + 3) / 3),
+		"S" : this.getMilliseconds()
+	};
+	var week = {
+		"0" : "/u65e5",
+		"1" : "/u4e00",
+		"2" : "/u4e8c",
+		"3" : "/u4e09",
+		"4" : "/u56db",
+		"5" : "/u4e94",
+		"6" : "/u516d"
+	};
+	if (/(y+)/.test(fmt)) {
+		fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+	}
+	if (/(E+)/.test(fmt)) {
+		fmt = fmt.replace(RegExp.$1, ((RegExp.$1.length > 1) ? (RegExp.$1.length > 2 ? "/u661f/u671f" : "/u5468") : "") + week[this.getDay() + ""]);
+	}
+	for ( var k in o) {
+		if (new RegExp("(" + k + ")").test(fmt)) {
+			fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+		}
+	}
+	return fmt;
+}
+
+jQuery.fn.extend({
+	serializeAll : function() {
+		return jQuery.param(this.serializeArrayAll());
+	},
+	serializeArrayAll : function() {
+		return this.map(function() {
+			var elements = jQuery.prop(this, "elements");
+			return elements ? jQuery.makeArray(elements) : this;
+		}).filter(
+				function() {
+					var type = this.type;
+					return this.name && /^(?:input|select|textarea|keygen)/i.test(this.nodeName)
+							&& !/^(?:submit|button|image|reset|file)$/i.test(type) && (this.checked || !(/^(?:checkbox|radio)$/i).test(type));
+				}).map(function(i, elem) {
+			var val = jQuery(this).val();
+
+			return val == null ? null : jQuery.isArray(val) ? jQuery.map(val, function(val) {
+				return {
+					name : elem.name,
+					value : val.replace(/\r?\n/g, "\r\n")
+				};
+			}) : {
+				name : elem.name,
+				value : val.replace(/\r?\n/g, "\r\n")
+			};
+		}).get();
+	}
+});
+
+$(function() {
+	$(document.body).keydown(
+			function(e) {
+				if (e.keyCode == 8 && e.target.tagName && (e.target.tagName.toUpperCase() == "INPUT" || e.target.tagName.toUpperCase() == "TEXTAREA")
+						&& ($(e.target).attr("readonly"))) {
+					e.preventDefault();
+				}
+			});
+	window["AW"] = new AWUtil();
+	if (typeof window["page_init"] != "undefined") {
+		var next = window["page_init"](AW.initPage);
+		if (!(typeof next != "undefined" && next === false)) {
+			AW.initPage();
+		}
+	} else {
+		AW.initPage();
+	}
+
+	function resetDatePickerPosition() {
+		setTimeout(function() {
+			$(".aw-date").each(function(i, n) {
+				$(n).datetimepicker("place");
+			});
+			resetDatePickerPosition();
+		}, 500);
+	}
+	resetDatePickerPosition();
+});
