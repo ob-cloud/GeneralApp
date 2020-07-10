@@ -10,7 +10,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.19.2",
     "btoa": "^1.2.1",
     "dayjs": "^1.8.28",
     "md5": "^2.2.1"
